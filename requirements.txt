@@ -1,0 +1,9 @@
+torch
+torchvision
+anthropic
+gradio
+rapidfuzz
+pandas
+pillow
+python-dotenv
+grad-cam

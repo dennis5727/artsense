@@ -1,0 +1,8 @@
+.env
+model/*.pth
+model/*.json
+data/
+images/
+__pycache__/
+*.pyc
+.DS_Store
