@@ -31,7 +31,7 @@ def handle_question(question: str):
     return artist_text, result["explanation"], result["sample_images"]
 
 
-with gr.Blocks(title="ArtSense AI", theme=gr.themes.Soft()) as demo:
+with gr.Blocks(title="ArtSense AI") as demo:
     gr.Markdown(
         """
         # ArtSense AI
@@ -99,4 +99,4 @@ with gr.Blocks(title="ArtSense AI", theme=gr.themes.Soft()) as demo:
 
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(theme=gr.themes.Soft())

@@ -1,6 +1,6 @@
 torch
 torchvision
-anthropic
+google-generativeai
 gradio
 rapidfuzz
 pandas

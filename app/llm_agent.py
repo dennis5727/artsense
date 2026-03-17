@@ -1,23 +1,23 @@
 import os
 import pandas as pd
-import anthropic
+from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
 
-_client: anthropic.Anthropic | None = None
+_client: genai.Client | None = None
 
 
-def _get_client() -> anthropic.Anthropic:
+def _get_client() -> genai.Client:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+        _client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
     return _client
 
 
 def extract_artist_name(question: str, artist_names: list[str]) -> str:
     """
-    Use Claude Haiku to extract/resolve the artist name being asked about.
+    Use Gemini Flash to extract/resolve the artist name being asked about.
     Returns a best-guess artist name string (may still need fuzzy matching).
     """
     names_list = "\n".join(f"- {n}" for n in artist_names)
@@ -29,17 +29,16 @@ def extract_artist_name(question: str, artist_names: list[str]) -> str:
         f"Reply with only the artist's full name exactly as it appears in the list above. "
         f"If the question does not refer to any artist in the list, reply with 'UNKNOWN'."
     )
-    response = _get_client().messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=50,
-        messages=[{"role": "user", "content": prompt}],
+    response = _get_client().models.generate_content(
+        model="gemini-2.0-flash-lite",
+        contents=prompt,
     )
-    return response.content[0].text.strip()
+    return response.text.strip()
 
 
 def explain_artwork(artist_row: dict, user_context: str) -> str:
     """
-    Use Claude Sonnet to generate a beginner-friendly educational explanation.
+    Use Gemini Flash to generate a beginner-friendly educational explanation.
     `artist_row` is a dict from artists.csv; `user_context` is the original user input.
     """
     metadata = "\n".join(
@@ -58,9 +57,8 @@ def explain_artwork(artist_row: dict, user_context: str) -> str:
         f"4. Answers the user's specific question if they asked one\n\n"
         f"Avoid jargon. Write as if explaining to a curious student with no art history background."
     )
-    response = _get_client().messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=600,
-        messages=[{"role": "user", "content": prompt}],
+    response = _get_client().models.generate_content(
+        model="gemini-2.0-flash-lite",
+        contents=prompt,
     )
-    return response.content[0].text.strip()
+    return response.text.strip()
