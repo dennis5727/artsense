@@ -1,23 +1,28 @@
+import logging
 import os
 import pandas as pd
-from google import genai
+from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
 
-_client: genai.Client | None = None
+logger = logging.getLogger(__name__)
+
+MODEL = "llama-3.3-70b-versatile"
+
+_client: Groq | None = None
 
 
-def _get_client() -> genai.Client:
+def _get_client() -> Groq:
     global _client
     if _client is None:
-        _client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+        _client = Groq(api_key=os.environ["GROQ_API_KEY"])
     return _client
 
 
 def extract_artist_name(question: str, artist_names: list[str]) -> str:
     """
-    Use Gemini Flash to extract/resolve the artist name being asked about.
+    Use Groq (Llama 3.3 70B) to extract/resolve the artist name being asked about.
     Returns a best-guess artist name string (may still need fuzzy matching).
     """
     names_list = "\n".join(f"- {n}" for n in artist_names)
@@ -29,16 +34,22 @@ def extract_artist_name(question: str, artist_names: list[str]) -> str:
         f"Reply with only the artist's full name exactly as it appears in the list above. "
         f"If the question does not refer to any artist in the list, reply with 'UNKNOWN'."
     )
-    response = _get_client().models.generate_content(
-        model="gemini-2.0-flash-lite",
-        contents=prompt,
-    )
-    return response.text.strip()
+    try:
+        response = _get_client().chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.0,
+            max_completion_tokens=50,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception:
+        logger.exception("Groq extract_artist_name failed (question=%r)", question)
+        raise
 
 
 def explain_artwork(artist_row: dict, user_context: str) -> str:
     """
-    Use Gemini Flash to generate a beginner-friendly educational explanation.
+    Use Groq (Llama 3.3 70B) to generate a beginner-friendly educational explanation.
     `artist_row` is a dict from artists.csv; `user_context` is the original user input.
     """
     metadata = "\n".join(
@@ -57,8 +68,17 @@ def explain_artwork(artist_row: dict, user_context: str) -> str:
         f"4. Answers the user's specific question if they asked one\n\n"
         f"Avoid jargon. Write as if explaining to a curious student with no art history background."
     )
-    response = _get_client().models.generate_content(
-        model="gemini-2.0-flash-lite",
-        contents=prompt,
-    )
-    return response.text.strip()
+    try:
+        response = _get_client().chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_completion_tokens=1024,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception:
+        logger.exception(
+            "Groq explain_artwork failed (artist=%r, user_context=%r)",
+            artist_row.get("name"), user_context,
+        )
+        raise

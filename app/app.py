@@ -1,9 +1,14 @@
+import logging
+
 import gradio as gr
 from PIL import Image
 
 from app.qa_pipeline import run_image_pipeline, run_text_pipeline
 
-CONFIDENCE_THRESHOLD = 0.80
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 
 
 def handle_image(image: Image.Image):
@@ -94,7 +99,7 @@ with gr.Blocks(title="ArtSense AI") as demo:
 
     gr.Markdown(
         "_ArtSense AI covers 50 historical Western artists from the 15th to early 20th century. "
-        "Powered by EfficientNet-B3 and Claude AI._"
+        "Powered by EfficientNet-B3 and Llama 3.3 70B (via Groq)._"
     )
 
 
